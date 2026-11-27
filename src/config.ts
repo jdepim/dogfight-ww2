@@ -10,6 +10,7 @@ export const CONFIG = {
   damage: { hpPerUnit: 40, engineThrustLoss: 0.6, tailControlLoss: 0.5, wingRollBias: 0.6, tankLeak: 0.5 },
   resources: { fuelSeconds: 240, ammo: 300, fireRate: 15, refuelSeconds: 5 },
   bullets: { speed: 600, range: 800, gravityFactor: 0.3, tracerEvery: 4 },
+  landing: { maxSpeed: 60, maxSink: 4, maxRollDeg: 10, maxHeadingDeg: 15 },
   aim: { leadIndicatorRange: 350 },
   waves: { pauseSeconds: 30, maxFighters: 8, bomberEvery: 5 },
   world: { size: 4000, ceiling: 1500, seed: 1944 },
