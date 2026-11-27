@@ -42,7 +42,9 @@ export function chaseCamera(cam: THREE.PerspectiveCamera, target: Pose, dt: numb
     // Only near the vertical (loops) does the camera borrow the plane's up to stay well-defined.
     const w = smoothstep(0.75, 0.97, Math.abs(_f.y));
     _up.copy(WORLD_UP).multiplyScalar(1 - w).addScaledVector(_u, w).normalize();
-    _want.copy(target.position).addScaledVector(_f, -BACK).addScaledVector(_up, UP);
+    // Narrower FOV (wide phone screens) → step back so the plane keeps the same apparent size.
+    const zoom = Math.tan((35 * Math.PI) / 180) / Math.tan((cam.fov * Math.PI) / 360);
+    _want.copy(target.position).addScaledVector(_f, -BACK * zoom).addScaledVector(_up, UP * zoom);
     _look.copy(target.position).addScaledVector(_f, AHEAD);
   }
   if (mode === 'target') cam.position.lerp(_want, k);

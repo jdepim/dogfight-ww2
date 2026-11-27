@@ -55,3 +55,14 @@ describe('camera comfort', () => {
     expect(Math.abs(dir.dot(cam.up))).toBeLessThan(0.9);
   });
 });
+
+describe('camera distance', () => {
+  it('backs off when the field of view is narrower, so the plane keeps the same size on screen', () => {
+    const s = createFlightState(new THREE.Vector3(0, 300, 0), 0, false);
+    const wide = new THREE.PerspectiveCamera(70, 1, 0.5, 3000);
+    const narrow = new THREE.PerspectiveCamera(42, 1, 0.5, 3000);
+    for (let i = 0; i < 120; i++) { chaseCamera(wide, s, 1 / 60, 'chase'); chaseCamera(narrow, s, 1 / 60, 'chase'); }
+    const dw = wide.position.distanceTo(s.position), dn = narrow.position.distanceTo(s.position);
+    expect(dn / dw).toBeCloseTo(Math.tan((35 * Math.PI) / 180) / Math.tan((21 * Math.PI) / 180), 1);
+  });
+});
