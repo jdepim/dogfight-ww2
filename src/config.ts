@@ -7,6 +7,7 @@ export const CONFIG = {
     throttleRate: 0.6, groundClearance: 1.5, alignRate: 3, stallTorque: 1.5,
     rollingFriction: 0.4, idleBrake: 3, maxDiveFactor: 1.25, groundTurnRate: 0.6,
   },
+  damage: { hpPerUnit: 40, engineThrustLoss: 0.6, tailControlLoss: 0.5, wingRollBias: 0.6, tankLeak: 0.5 },
   resources: { fuelSeconds: 240, ammo: 300, fireRate: 15, refuelSeconds: 5 },
   bullets: { speed: 600, range: 800, gravityFactor: 0.3, tracerEvery: 4 },
   aim: { leadIndicatorRange: 350 },
