@@ -23,7 +23,7 @@ const input = new InputManager(canvas, ui);
 const menus = new Menus(ui, {
   onStart: () => { requestImmersive(); newGame(); },
   onResume: () => { requestImmersive(); game.resume(); input.reset(); },
-  onQuit: () => { game.phase = 'menu'; clearPlanes(); },
+  onQuit: () => { game.quit(); clearPlanes(); },
   onSettings: applySettings,
 });
 const sfx = new Sfx();

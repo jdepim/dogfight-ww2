@@ -96,6 +96,46 @@ describe('Game', () => {
     expect(rw.destroyedUntilWave).toBe(g.wave + 1);
   });
 
+  it('the bombed runway is usable again in the break after the next wave', () => {
+    const g = newGame();
+    fly(g); g.step(NEUTRAL_INPUT, DT);
+    const rw = g.layout.runway;
+    g.enemies.push(createEnemy(99, 'bomber', new THREE.Vector3(rw.center.x, 250, rw.center.z), 0, 0.5));
+    g.step(NEUTRAL_INPUT, DT); // bombed during wave 1
+    expect(g.runwayDestroyed).toBe(true);
+    for (const e of g.enemies) e.damage.hp = 0;
+    steps(g, 0.1);
+    expect(g.phase).toBe('break');
+    expect(g.runwayDestroyed).toBe(true); // break after wave 1
+    steps(g, 30.2);
+    expect(g.wave).toBe(2);
+    expect(g.runwayDestroyed).toBe(true); // wave 2
+    for (const e of g.enemies) e.damage.hp = 0;
+    steps(g, 0.1);
+    expect(g.phase).toBe('break');
+    expect(g.runwayDestroyed).toBe(false); // break after wave 2: land, refuel
+    const f = g.player.flight;
+    f.position.set(rw.center.x, CONFIG.flight.groundClearance, rw.center.z);
+    f.orientation.identity(); f.velocity.set(0, -1, -40); f.speed = 40;
+    g.step(NEUTRAL_INPUT, DT);
+    expect(g.phase).toBe('break');
+    expect(f.onGround).toBe(true);
+  });
+
+  it('quitting saves the best score', () => {
+    const mem = new Map<string, string>();
+    const storage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v) } as unknown as Storage;
+    const g = new Game(generateWorld(CONFIG.world.seed), makeRng(5), storage);
+    g.start();
+    fly(g); g.step(NEUTRAL_INPUT, DT);
+    g.score.points = 900;
+    g.pause();
+    g.quit();
+    expect(g.phase).toBe('menu');
+    expect(g.best).toBe(900);
+    expect(new Game(generateWorld(CONFIG.world.seed), makeRng(5), storage).best).toBe(900);
+  });
+
   it('ends the game when shot down', () => {
     const g = newGame();
     fly(g); g.step(NEUTRAL_INPUT, DT);

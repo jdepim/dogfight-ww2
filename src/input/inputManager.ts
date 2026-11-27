@@ -32,6 +32,9 @@ export class InputManager {
   private joyBase: HTMLElement;
   private thrFill: HTMLElement;
   private disposers: (() => void)[] = [];
+  /** Browsers emulate mouse events after a tap: ignore mouse input this long after a touch. */
+  private lastTouch = -Infinity;
+  private recentTouch(): boolean { return performance.now() - this.lastTouch < 800; }
 
   constructor(private canvas: HTMLCanvasElement, overlay: HTMLElement) {
     this.touchUi = el('div', 'touch-ui', overlay);
@@ -60,14 +63,14 @@ export class InputManager {
     });
     on(window, 'keyup', (e: KeyboardEvent) => this.keys.delete(e.code));
     on(canvas, 'mousedown', (e: MouseEvent) => {
-      if (!this.enabled) return;
+      if (!this.enabled || this.recentTouch()) return;
       this.useDesktop();
       if (document.pointerLockElement !== canvas) { canvas.requestPointerLock?.(); return; }
       if (e.button === 0) this.mouseFire = true;
     });
     on(window, 'mouseup', (e: MouseEvent) => { if (e.button === 0) this.mouseFire = false; });
     on(window, 'mousemove', (e: MouseEvent) => {
-      if (document.pointerLockElement !== canvas || !this.enabled) return;
+      if (document.pointerLockElement !== canvas || !this.enabled || this.recentTouch()) return;
       this.useDesktop();
       const d = mapMouse(e.movementX, e.movementY, this.settings.sensitivity, this.settings.invertY);
       this.stick.roll = clamp(this.stick.roll + d.roll, -1, 1);
@@ -80,7 +83,10 @@ export class InputManager {
     on(document, 'visibilitychange', () => { if (document.hidden) { this.releaseAll(); if (this.enabled) this.onPauseRequest(); } });
 
     // --- Touch
-    on(window, 'touchstart', () => this.useTouch(), { passive: true });
+    on(window, 'touchstart', () => { this.lastTouch = performance.now(); this.useTouch(); }, { passive: true });
+    // Rotating a phone to portrait hides the controls behind the "turn your phone" overlay: pause.
+    const portrait = window.matchMedia?.('(orientation: portrait) and (pointer: coarse)');
+    if (portrait) on(portrait as unknown as EventTarget, 'change', (e: { matches: boolean }) => { if (e.matches && this.enabled) this.onPauseRequest(); });
     on(this.joyBase, 'touchstart', (e: TouchEvent) => {
       e.preventDefault();
       const t = e.changedTouches[0];

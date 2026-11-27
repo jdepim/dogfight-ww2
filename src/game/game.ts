@@ -86,8 +86,22 @@ export class Game {
     if (this.phase === 'paused') this.phase = this.resumePhase;
   }
 
+  /** Wave number used for runway availability: a break already counts as the next wave. */
+  private get runwayWave(): number {
+    return this.phase === 'break' || (this.phase === 'paused' && this.resumePhase === 'break') ? this.wave + 1 : Math.max(1, this.wave);
+  }
+
+  /** Bombed during wave N: unusable until the end of wave N+1 (spec §7.4). */
   get runwayDestroyed(): boolean {
-    return this.layout.runway.destroyedUntilWave >= Math.max(1, this.wave);
+    return this.layout.runway.destroyedUntilWave >= this.runwayWave;
+  }
+
+  /** Leave to the main menu, keeping the record. */
+  quit(): void {
+    if (this.phase === 'menu') return;
+    this.newRecord = saveBest(this.score.points, this.storageOrDefault());
+    this.best = Math.max(this.best, this.score.points);
+    this.phase = 'menu';
   }
 
   get boundsState(): 'ok' | 'warn' | 'force' {
@@ -130,7 +144,7 @@ export class Game {
     if (this.phase === 'preflight' && !f.onGround) this.startWave(1);
 
     if (!f.onGround) {
-      const td = checkTouchdown(f, this.layout.runway, Math.max(1, this.wave));
+      const td = checkTouchdown(f, this.layout.runway, this.runwayWave);
       if (td.result === 'landed') {
         f.onGround = true;
         f.velocity.y = 0;
