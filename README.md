@@ -4,7 +4,7 @@ Petit jeu de combat aérien en 3D voxel, ambiance Seconde Guerre mondiale, jouab
 
 Survis à des vagues d'ennemis de plus en plus dures. Anticipe leurs trajectoires pour les toucher, gère ton carburant et tes munitions, pose-toi sur la piste pour réparer… et défends-la contre les bombardiers toutes les 5 vagues.
 
-**Jouer en ligne :** https://jdepim.github.io/dogfight-ww2/ (après activation de GitHub Pages, voir plus bas)
+**Jouer en ligne :** https://jdepim.github.io/dogfight-ww2/
 
 ## Commandes
 
