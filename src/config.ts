@@ -4,6 +4,8 @@ export const CONFIG = {
   flight: {
     stallSpeed: 45, cruiseSpeed: 110, maxSpeed: 160, maxThrust: 18, dragCoef: 0.0007,
     pitchRate: 1.4, rollRate: 2.6, yawRate: 0.5, highSpeedRateFactor: 0.6, gravity: 9.81,
+    throttleRate: 0.6, groundClearance: 1.5, alignRate: 3, stallTorque: 1.5,
+    rollingFriction: 0.4, idleBrake: 3, maxDiveFactor: 1.25, groundTurnRate: 0.6,
   },
   resources: { fuelSeconds: 240, ammo: 300, fireRate: 15, refuelSeconds: 5 },
   bullets: { speed: 600, range: 800, gravityFactor: 0.3, tracerEvery: 4 },
