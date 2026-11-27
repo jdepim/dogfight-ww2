@@ -20,7 +20,7 @@ export interface Enemy {
 }
 
 const A = {
-  detect: 1500, attackRange: 400, attackCone: 0.6, breakOff: 650, sixRange: 300, sixCone: (135 * Math.PI) / 180,
+  detect: 6000, attackRange: 400, attackCone: 0.6, breakOff: 650, sixRange: 300, sixCone: (135 * Math.PI) / 180,
   fireRange: 500, minAlt: 80, lookAhead: 2, noiseMeters: 25, noisePeriod: 0.6, evadeTime: 2.5,
   rearGunRange: 300, bombAlt: 250, patrolAlt: 350,
 };
@@ -40,7 +40,7 @@ const _f = new THREE.Vector3();
 const clamp = (v: number, a = -1, b = 1) => Math.min(b, Math.max(a, v));
 
 /** Bank-and-pull steering towards a world point. */
-function steerTo(s: FlightState, point: THREE.Vector3): { pitch: number; roll: number; yaw: number } {
+export function steerTo(s: FlightState, point: THREE.Vector3): { pitch: number; roll: number; yaw: number } {
   _inv.copy(s.orientation).invert();
   _l.subVectors(point, s.position).applyQuaternion(_inv).normalize();
   const off = Math.acos(clamp(-_l.z));

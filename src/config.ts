@@ -12,6 +12,8 @@ export const CONFIG = {
   bullets: { speed: 600, range: 800, gravityFactor: 0.3, tracerEvery: 4 },
   landing: { maxSpeed: 60, maxSink: 4, maxRollDeg: 10, maxHeadingDeg: 15 },
   input: { mouseSensitivity: 0.004, mouseRecenter: 2.5, deadZone: 0.12, invertY: false },
+  combat: { hitOnFighter: 0.3, hitOnBomber: 0.12, hitOnPlayer: 0.12, planeRadius: 4, bomberRadius: 7, collisionRadius: 3, bombRadius: 120 },
+  score: { killPerWave: 100, nonStopPerWave: 250 },
   aim: { leadIndicatorRange: 350 },
   waves: { pauseSeconds: 30, maxFighters: 8, bomberEvery: 5 },
   world: { size: 4000, ceiling: 1500, seed: 1944 },
