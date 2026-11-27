@@ -242,7 +242,9 @@ export class GameRenderer {
     while (v.smokeAcc >= 1) {
       v.smokeAcc -= 1;
       const shade = intensity > 0.6 ? 0x262626 : 0x707070;
-      this.emit(v.root.position, new THREE.Vector3((Math.random() - 0.5) * 2, 2 + Math.random() * 2, (Math.random() - 0.5) * 2), 1.5 + intensity * 2, 1.2 + intensity * 1.5, shade, 1.5);
+      // Emit behind the plane so the trail never blocks the chase camera.
+      const back = this._p.set(0, 0, 4).applyQuaternion(v.root.quaternion).add(v.root.position);
+      this.emit(back, new THREE.Vector3((Math.random() - 0.5) * 2, 1 + Math.random() * 2, (Math.random() - 0.5) * 2), 1 + intensity * 1.5, 0.5 + intensity * 0.8, shade, 1.2);
     }
   }
 
