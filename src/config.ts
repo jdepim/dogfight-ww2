@@ -11,6 +11,7 @@ export const CONFIG = {
   resources: { fuelSeconds: 240, ammo: 300, fireRate: 15, refuelSeconds: 5 },
   bullets: { speed: 600, range: 800, gravityFactor: 0.3, tracerEvery: 4 },
   landing: { maxSpeed: 60, maxSink: 4, maxRollDeg: 10, maxHeadingDeg: 15 },
+  input: { mouseSensitivity: 0.004, mouseRecenter: 2.5, deadZone: 0.12, invertY: false },
   aim: { leadIndicatorRange: 350 },
   waves: { pauseSeconds: 30, maxFighters: 8, bomberEvery: 5 },
   world: { size: 4000, ceiling: 1500, seed: 1944 },
