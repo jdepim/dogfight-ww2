@@ -284,7 +284,7 @@ export class Game {
         pos.add(new THREE.Vector3((this.rng() - 0.5) * 300, (this.rng() - 0.5) * 100, (this.rng() - 0.5) * 300));
         if (pos.distanceTo(pp) < 1600) pos = pos.sub(pp).setLength(1600).add(pp).setY(alt);
         const heading = Math.atan2(-pos.x, pos.z); // face the map centre
-        const e = createEnemy(this.nextId++, kind, pos, heading, comp.skill);
+        const e = createEnemy(this.nextId++, kind, pos, heading, comp.skill, this.rng);
         e.flight.velocity.copy(forwardOf(e.flight)).multiplyScalar(kind === 'bomber' ? 90 : 110);
         e.flight.speed = e.flight.velocity.length();
         this.enemies.push(e);
