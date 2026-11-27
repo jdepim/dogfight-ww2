@@ -51,10 +51,10 @@ export function generateWorld(seed: number): WorldLayout {
   for (let cx = -CITY_HALF; cx < CITY_HALF; cx += CELL)
     for (let cz = -CITY_HALF; cz < CITY_HALF; cz += CELL) {
       if (rng() < 0.15) continue; // park / square
-      const foot = CELL - STREET - Math.floor(rng() * 3) * 6;
+      const foot = CELL - STREET - Math.floor(rng() * 3) * 8; // multiple of 4 m (tower voxel size)
       const x0 = cx + (CELL - foot) / 2, z0 = cz + (CELL - foot) / 2;
       const dist = Math.hypot(cx + CELL / 2, cz + CELL / 2) / (CITY_HALF * Math.SQRT2);
-      const h = Math.round((40 + (1 - dist) * 140 * (0.5 + rng() * 0.5)) / 2) * 2;
+      const h = Math.round((40 + (1 - dist) * 140 * (0.5 + rng() * 0.5)) / 4) * 4;
       buildings.push({
         min: new THREE.Vector3(x0, 0, z0),
         max: new THREE.Vector3(x0 + foot, Math.min(200, Math.max(40, h)), z0 + foot),

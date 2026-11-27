@@ -23,7 +23,7 @@ export function onRunway(p: THREE.Vector3, rw: Runway): boolean {
 /** Evaluate contact with the ground. Call each step while airborne. */
 export function checkTouchdown(s: FlightState, rw: Runway, currentWave: number): { result: LandingResult; reason?: string } {
   const L = CONFIG.landing;
-  if (s.position.y > CONFIG.flight.groundClearance + 0.01) return { result: 'airborne' };
+  if (s.position.y > CONFIG.flight.groundClearance + 0.01 || (s.velocity.y > 0 && s.position.y > CONFIG.flight.groundClearance - 0.5)) return { result: 'airborne' };
   if (!onRunway(s.position, rw)) return { result: 'crash', reason: 'Hors piste' };
   if (rw.destroyedUntilWave >= currentWave) return { result: 'crash', reason: 'Piste détruite' };
   const horiz = Math.hypot(s.velocity.x, s.velocity.z);

@@ -79,10 +79,32 @@ describe('stepFlight', () => {
     expect(s.onGround).toBe(false);
   });
 
+  it('leaves the ground clearance height on the lift-off step (no immediate touchdown)', () => {
+    const s = createFlightState(new THREE.Vector3(0, F.groundClearance, 0), 0, true);
+    s.velocity.set(0, 0, -60); s.speed = 60; s.throttle = 1;
+    stepFlight(s, { ...NEUTRAL_INPUT, pitch: 1 }, NEUTRAL_MODS, true, DT);
+    expect(s.onGround).toBe(false);
+    expect(s.position.y).toBeGreaterThan(F.groundClearance + 0.01);
+  });
+
   it('caps level speed at maxSpeed', () => {
     const s = airborne(F.cruiseSpeed, 1);
     run(s, 60);
     expect(s.speed).toBeLessThanOrEqual(F.maxSpeed + 0.5);
+  });
+
+  it('cannot sustain a steep climb at full throttle (no rocket climb)', () => {
+    const s = airborne(100, 1);
+    s.orientation.setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.6);
+    s.velocity.copy(forwardOf(s)).multiplyScalar(100);
+    run(s, 8);
+    expect(s.speed).toBeLessThan(85);
+  });
+
+  it('reaches level cruise speed around a third of throttle and more with full throttle', () => {
+    const s = airborne(F.cruiseSpeed, 1);
+    run(s, 20);
+    expect(s.speed).toBeGreaterThan(130);
   });
 
   it('climbing costs speed', () => {

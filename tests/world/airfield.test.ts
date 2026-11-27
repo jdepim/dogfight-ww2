@@ -23,6 +23,14 @@ describe('checkTouchdown', () => {
     const { s, r } = approach({ y: 20 });
     expect(checkTouchdown(s, r, 1).result).toBe('airborne');
   });
+  it('is airborne when climbing away at runway height', () => {
+    const { s, r } = approach({ speed: 80, sink: -2 });
+    expect(checkTouchdown(s, r, 1).result).toBe('airborne');
+  });
+  it('is not airborne when well below runway height, even climbing', () => {
+    const { s, r } = approach({ speed: 80, sink: -2, y: 0.5 });
+    expect(checkTouchdown(s, r, 1).result).toBe('crash');
+  });
   it('lands within tolerances', () => {
     const { s, r } = approach();
     expect(checkTouchdown(s, r, 1)).toEqual({ result: 'landed' });

@@ -31,38 +31,75 @@ export class VoxelGrid {
   }
 }
 
-// Face definitions: normal, 4 corners (unit cube), shade factor baked in vertex colour.
-const FACES: { n: [number, number, number]; c: [number, number, number][]; shade: number }[] = [
-  { n: [1, 0, 0], c: [[1, 0, 0], [1, 1, 0], [1, 1, 1], [1, 0, 1]], shade: 0.8 },
-  { n: [-1, 0, 0], c: [[0, 0, 1], [0, 1, 1], [0, 1, 0], [0, 0, 0]], shade: 0.8 },
-  { n: [0, 1, 0], c: [[0, 1, 1], [1, 1, 1], [1, 1, 0], [0, 1, 0]], shade: 1.0 },
-  { n: [0, -1, 0], c: [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], shade: 0.55 },
-  { n: [0, 0, 1], c: [[1, 0, 1], [1, 1, 1], [0, 1, 1], [0, 0, 1]], shade: 0.7 },
-  { n: [0, 0, -1], c: [[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0]], shade: 0.9 },
-];
+// Shade baked in vertex colour per face normal: [+axis, -axis] for x, y, z.
+const SHADE: [number, number][] = [[0.8, 0.8], [1.0, 0.55], [0.7, 0.9]];
 
-/** Mesh only visible faces, vertex colours, centred on the origin. Grid z=0 is the front (−Z). */
+/**
+ * Greedy-meshed geometry: visible faces only, coplanar same-colour faces merged into rectangles.
+ * Vertex colours, centred on the origin. Grid z=0 is the front (−Z).
+ */
 export function buildGeometry(grid: VoxelGrid, voxelSize: number): THREE.BufferGeometry {
   const pos: number[] = [], nor: number[] = [], col: number[] = [], ind: number[] = [];
-  const ox = grid.sx / 2, oy = grid.sy / 2, oz = grid.sz / 2;
+  const dims = [grid.sx, grid.sy, grid.sz];
+  const off = [grid.sx / 2, grid.sy / 2, grid.sz / 2];
   const tmp = new THREE.Color();
-  for (let z = 0; z < grid.sz; z++)
-    for (let y = 0; y < grid.sy; y++)
-      for (let x = 0; x < grid.sx; x++) {
-        const c = grid.get(x, y, z);
-        if (!c) continue;
-        tmp.setHex(c, THREE.SRGBColorSpace);
-        for (const f of FACES) {
-          if (grid.get(x + f.n[0], y + f.n[1], z + f.n[2])) continue;
-          const base = pos.length / 3;
-          for (const v of f.c) {
-            pos.push((x + v[0] - ox) * voxelSize, (y + v[1] - oy) * voxelSize, (z + v[2] - oz) * voxelSize);
-            nor.push(f.n[0], f.n[1], f.n[2]);
-            col.push(tmp.r * f.shade, tmp.g * f.shade, tmp.b * f.shade);
-          }
-          ind.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  const at = (c: number[]) => grid.get(c[0], c[1], c[2]);
+
+  for (let d = 0; d < 3; d++) {
+    const u = (d + 1) % 3, v = (d + 2) % 3;
+    const nu = dims[u], nv = dims[v];
+    const mask = new Float64Array(nu * nv);
+    const x = [0, 0, 0];
+    for (x[d] = 0; x[d] <= dims[d]; x[d]++) {
+      // Build mask: key = colour * 2 + (1 for +d face, 0 for -d face) + 1 (0 = nothing)
+      for (x[v] = 0; x[v] < nv; x[v]++)
+        for (x[u] = 0; x[u] < nu; x[u]++) {
+          const behind = x[d] > 0 ? at([x[0] - (d === 0 ? 1 : 0), x[1] - (d === 1 ? 1 : 0), x[2] - (d === 2 ? 1 : 0)]) : 0;
+          const front = x[d] < dims[d] ? at(x) : 0;
+          let key = 0;
+          if (behind && !front) key = behind * 2 + 1 + 1;
+          else if (front && !behind) key = front * 2 + 0 + 1;
+          mask[x[u] + x[v] * nu] = key;
         }
-      }
+      // Greedy merge
+      for (let j = 0; j < nv; j++)
+        for (let i = 0; i < nu; ) {
+          const key = mask[i + j * nu];
+          if (!key) { i++; continue; }
+          let w = 1;
+          while (i + w < nu && mask[i + w + j * nu] === key) w++;
+          let h = 1;
+          outer: for (; j + h < nv; h++)
+            for (let k = 0; k < w; k++) if (mask[i + k + (j + h) * nu] !== key) break outer;
+          for (let hh = 0; hh < h; hh++) for (let k = 0; k < w; k++) mask[i + k + (j + hh) * nu] = 0;
+
+          const positive = (key - 1) % 2 === 1;
+          const color = Math.floor((key - 1) / 2);
+          const shade = SHADE[d][positive ? 0 : 1];
+          tmp.setHex(color, THREE.SRGBColorSpace);
+          const base = [0, 0, 0]; base[d] = x[d]; base[u] = i; base[v] = j;
+          const du = [0, 0, 0]; du[u] = w;
+          const dv = [0, 0, 0]; dv[v] = h;
+          const corners = [
+            base,
+            [base[0] + du[0], base[1] + du[1], base[2] + du[2]],
+            [base[0] + du[0] + dv[0], base[1] + du[1] + dv[1], base[2] + du[2] + dv[2]],
+            [base[0] + dv[0], base[1] + dv[1], base[2] + dv[2]],
+          ];
+          const order = positive ? [0, 1, 2, 3] : [0, 3, 2, 1];
+          const n = [0, 0, 0]; n[d] = positive ? 1 : -1;
+          const b = pos.length / 3;
+          for (const o of order) {
+            const c = corners[o];
+            pos.push((c[0] - off[0]) * voxelSize, (c[1] - off[1]) * voxelSize, (c[2] - off[2]) * voxelSize);
+            nor.push(n[0], n[1], n[2]);
+            col.push(tmp.r * shade, tmp.g * shade, tmp.b * shade);
+          }
+          ind.push(b, b + 1, b + 2, b, b + 2, b + 3);
+          i += w;
+        }
+    }
+  }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));

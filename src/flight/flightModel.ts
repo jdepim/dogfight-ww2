@@ -65,8 +65,10 @@ function rotateLocal(s: FlightState, axis: THREE.Vector3, angle: number): void {
 export function stepFlight(s: FlightState, input: FlightInput, mods: ControlModifiers, hasFuel: boolean, dt: number): void {
   const F = CONFIG.flight;
   s.throttle = clamp(s.throttle + input.throttleDelta * F.throttleRate * dt, 0, 1);
-  const thrust = hasFuel ? s.throttle * F.maxThrust * mods.thrustFactor : 0;
   const speed = s.velocity.length();
+  // Constant-power propeller: thrust falls with speed (no rocket climbs); a windmilling prop brakes.
+  const power = hasFuel ? s.throttle * F.enginePower * mods.thrustFactor : 0;
+  const thrust = power / Math.max(speed, F.minThrustSpeed) - F.idlePropDrag * (1 - (hasFuel ? s.throttle : 0));
 
   if (s.onGround) {
     stepGround(s, input, thrust, speed, dt);
@@ -141,5 +143,6 @@ function stepGround(s: FlightState, input: FlightInput, thrust: number, speed: n
     s.onGround = false;
     rotateLocal(s, X, 0.08);
     s.velocity.y += 2;
+    s.position.y = F.groundClearance + 0.1;
   }
 }

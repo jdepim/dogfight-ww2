@@ -2,7 +2,7 @@
 export const CONFIG = {
   sim: { step: 1 / 60, maxFrame: 0.25 },
   flight: {
-    stallSpeed: 45, cruiseSpeed: 110, maxSpeed: 160, maxThrust: 18, dragCoef: 0.0007,
+    stallSpeed: 45, cruiseSpeed: 110, maxSpeed: 160, enginePower: 331, minThrustSpeed: 40, dragCoef: 0.0000808, idlePropDrag: 2,
     pitchRate: 1.4, rollRate: 2.6, yawRate: 0.5, highSpeedRateFactor: 0.6, gravity: 9.81,
     throttleRate: 0.6, groundClearance: 1.5, alignRate: 3, stallTorque: 1.5,
     rollingFriction: 0.4, idleBrake: 3, maxDiveFactor: 1.25, groundTurnRate: 0.6,

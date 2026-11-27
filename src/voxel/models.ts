@@ -2,7 +2,7 @@ import { VoxelGrid } from './voxelGrid';
 import { makeRng } from '../core/rng';
 
 /** Voxel size (m) used to render each family of models. */
-export const VOXEL_SIZE = { plane: 0.4, bomber: 0.55, building: 2 } as const;
+export const VOXEL_SIZE = { plane: 0.4, bomber: 0.55, tower: 4, house: 2 } as const;
 
 interface FighterPalette {
   top: number; belly: number; nose: number; glass: number; ringOuter: number; ringInner: number; accent: number;
