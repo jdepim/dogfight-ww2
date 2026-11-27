@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { WorldLayout } from '../world/cityGen';
 import type { Bullet } from '../combat/ballistics';
+import { fovForAspect } from './camera';
 import { buildGeometry } from '../voxel/voxelGrid';
 import { BOMBER_PROPS, PROPELLER_ANCHOR, VOXEL_SIZE, makeBomber, makeBuilding, makeEnemyFighter, makePlayerFighter } from '../voxel/models';
 
@@ -269,6 +270,7 @@ export class GameRenderer {
   resize(w: number, h: number, cam: THREE.PerspectiveCamera): void {
     this.renderer.setSize(w, h, false);
     cam.aspect = w / h;
+    cam.fov = fovForAspect(cam.aspect);
     cam.updateProjectionMatrix();
   }
 
