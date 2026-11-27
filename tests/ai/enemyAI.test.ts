@@ -110,3 +110,53 @@ describe('enemy flight integration', () => {
     expect(fired).toBeGreaterThan(0);
   });
 });
+
+import { Game } from '../../src/game/game';
+
+describe('enemy variety (no endless circling)', () => {
+  function dogfight(seed: number) {
+    const g = new Game(generateWorld(1944), makeRng(seed)); g.start();
+    const f = g.player.flight; f.onGround = false; f.position.set(0, 500, 0); f.velocity.set(0, 0, -110); f.speed = 110; f.throttle = 0.5;
+    g.step({ pitch: 0, roll: 0, yaw: 0, throttleDelta: 0, fire: false }, 1 / 60);
+    let close = 0, samples = 0, sepSum = 0, passes = 0, wasClose = false;
+    for (let i = 0; i < 90 * 60; i++) {
+      g.player.damage.hp = 100; g.player.resources.fuel = 200; if (f.position.y < 300) f.position.y = 500;
+      g.step({ pitch: 0.3, roll: i % 600 < 300 ? 0.15 : -0.15, yaw: 0, throttleDelta: 0, fire: false }, 1 / 60);
+      if (g.enemies.length < 2) break;
+      const [a, b] = g.enemies;
+      const da = a.flight.position.distanceTo(f.position);
+      if (i > 20 * 60) {
+        samples++;
+        if (da < 100) close++;
+        sepSum += a.flight.position.distanceTo(b.flight.position);
+        const nowClose = da < 350;
+        if (nowClose && !wasClose) passes++;
+        wasClose = nowClose;
+      }
+    }
+    return { closeFrac: close / samples, avgSep: sepSum / samples, passes };
+  }
+
+  it('does not orbit the player at point-blank range, but keeps coming back for passes', () => {
+    const r = dogfight(2);
+    expect(r.closeFrac).toBeLessThan(0.15);
+    expect(r.passes).toBeGreaterThanOrEqual(3);
+  });
+
+  it('wingmen split up instead of flying glued together', () => {
+    expect(dogfight(2).avgSep).toBeGreaterThan(200);
+  });
+
+  it('breaks away when closer than 120 m', () => {
+    const e = fighter(V(0, 500, 0), 0.8);
+    thinkEnemy(e, plane(V(0, 500, -80)), empty, runway, makeRng(1));
+    expect(e.ai.state).toBe('extend');
+  });
+
+  it('gives each enemy its own temperament', () => {
+    const rng = makeRng(9);
+    const a = createEnemy(1, 'fighter', V(0, 500, 0), 0, 0.5, rng);
+    const b = createEnemy(2, 'fighter', V(0, 500, 0), 0, 0.5, rng);
+    expect(a.ai.personality).not.toEqual(b.ai.personality);
+  });
+});
