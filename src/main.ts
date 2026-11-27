@@ -10,6 +10,7 @@ import { chaseCamera } from './render/camera';
 import { Game, PLAYER_ID, type GameEvent, type Phase } from './game/game';
 import { Hud } from './ui/hud';
 import { Menus, type Settings } from './ui/menus';
+import { Sfx } from './audio/sfx';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
 const ui = document.getElementById('ui') as HTMLElement;
@@ -25,6 +26,8 @@ const menus = new Menus(ui, {
   onQuit: () => { game.phase = 'menu'; clearPlanes(); },
   onSettings: applySettings,
 });
+const sfx = new Sfx();
+for (const t of ['pointerdown', 'keydown', 'touchstart']) addEventListener(t, () => sfx.unlock(), { passive: true });
 const renderedIds = new Set<number>();
 let cameraMode: 'chase' | 'target' = 'chase';
 let shownPhase: Phase | null = null;
@@ -34,6 +37,7 @@ input.onPauseRequest = () => game.pause();
 
 function applySettings(s: Settings): void {
   input.settings = { invertY: s.invertY, sensitivity: CONFIG.input.mouseSensitivity * s.sensitivity };
+  sfx.setVolume(s.volume);
 }
 applySettings(menus.current);
 
@@ -59,9 +63,17 @@ function newGame(): void {
   cameraMode = 'chase';
 }
 
+function soundVolume(pos?: THREE.Vector3): number {
+  return pos ? Math.max(0, 1 - pos.distanceTo(game.player.flight.position) / 900) : 1;
+}
+
 function handleEvents(events: GameEvent[]): void {
   for (const ev of events) {
     switch (ev.type) {
+      case 'fire':
+        if (ev.id === PLAYER_ID) sfx.play('fire');
+        else sfx.play('enemyFire', soundVolume(game.enemies.find((e) => e.id === ev.id)?.flight.position));
+        break;
       case 'spawn': {
         const e = game.enemies.find((x) => x.id === ev.id);
         if (e) {
@@ -72,14 +84,22 @@ function handleEvents(events: GameEvent[]): void {
         break;
       }
       case 'despawn': renderer.removePlane(ev.id!); renderedIds.delete(ev.id!); break;
-      case 'explosion': renderer.spawnExplosion(ev.position!, ev.id === PLAYER_ID || ev.id === undefined); break;
-      case 'hit': renderer.spawnHitSpark(ev.position!); break;
+      case 'explosion': {
+        const big = ev.id === PLAYER_ID || ev.id === undefined;
+        renderer.spawnExplosion(ev.position!, big);
+        sfx.play(big ? 'bigExplosion' : 'explosion', Math.max(0.3, soundVolume(ev.position)));
+        break;
+      }
+      case 'hit':
+        renderer.spawnHitSpark(ev.position!);
+        sfx.play('hit', ev.id === PLAYER_ID ? 1 : 0.5);
+        break;
       case 'crash': renderer.removePlane(PLAYER_ID); renderedIds.delete(PLAYER_ID); break;
       case 'waveStart': hud.flash(`Vague ${game.wave}`); break;
       case 'waveCleared': hud.flash('Vague terminée !'); break;
       case 'runwayDestroyed': hud.flash('Piste bombardée !'); break;
       case 'kill': hud.flash('Abattu !', 1.2); break;
-      case 'landed': hud.flash('Posé ! Arrête-toi pour réparer', 2); break;
+      case 'landed': hud.flash('Posé ! Arrête-toi pour réparer', 2); sfx.play('landed'); break;
     }
   }
 }
@@ -151,6 +171,10 @@ const loop = new FixedLoop(
       }
       chaseCamera(camera, pose, frameDt, cameraMode === 'target' && nearest ? 'target' : 'chase', nearest);
     }
+    const playing = game.phase === 'preflight' || game.phase === 'wave' || game.phase === 'break';
+    const pr = game.player.resources;
+    sfx.setEngine(game.player.flight.throttle, game.player.damage.zones.engine > 0.3, playing && pr.fuel > 0);
+    if (playing && pr.fuel / CONFIG.resources.fuelSeconds < 0.15) sfx.play('alarm');
     renderer.render(camera, game.phase === 'paused' ? 0 : frameDt);
     if (game.phase !== 'menu') hud.update(game, camera, menus.current.easyMode, frameDt);
   },
